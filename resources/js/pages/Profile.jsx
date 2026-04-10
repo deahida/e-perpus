@@ -57,7 +57,7 @@ export default function Profile() {
             formData.append('avatar', avatarFile);
             formData.append('name', user?.name || '');
             const res = await api.post('/profile', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: { 'Content-Type': undefined },
             });
             updateUser(res.data.data);
             setAvatarFile(null);
