@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
-        $middleware->statefulApi();
+
 
         // Redirect unauthenticated API requests to JSON response instead of 'login' route
         $middleware->redirectGuestsTo(function (Request $request) {
