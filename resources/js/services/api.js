@@ -9,11 +9,6 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// Fetch CSRF cookie from Sanctum (must be called before login)
-export const getCsrfCookie = () => {
-    return axios.get('/sanctum/csrf-cookie', { withCredentials: true });
-};
-
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
