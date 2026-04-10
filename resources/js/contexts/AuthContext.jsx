@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getCsrfCookie } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -29,6 +29,8 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = async (email, password) => {
+        // Fetch CSRF cookie first (required by Sanctum stateful API)
+        await getCsrfCookie();
         const res = await api.post('/login', { email, password });
         const { user: userData, token } = res.data.data;
         localStorage.setItem('token', token);
