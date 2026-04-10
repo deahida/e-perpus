@@ -10,7 +10,7 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
-        'judul', 'isbn', 'penulis', 'penerbit_id', 'category_id',
+        'kode_buku', 'judul', 'isbn', 'penulis', 'penerbit_id', 'category_id',
         'rak_id', 'tahun_terbit', 'stok', 'stok_tersedia', 'cover',
         'deskripsi', 'bahasa', 'jumlah_halaman', 'is_active',
     ];
@@ -20,6 +20,19 @@ class Book extends Model
         'stok' => 'integer',
         'stok_tersedia' => 'integer',
     ];
+
+    /**
+     * Generate unique kode_buku in format BK-XXXXXX
+     */
+    public static function generateKodeBuku(): string
+    {
+        $last = static::where('kode_buku', 'like', 'BK-%')
+            ->orderByRaw("CAST(SUBSTRING(kode_buku, 4) AS UNSIGNED) DESC")
+            ->first();
+
+        $number = $last ? (int) substr($last->kode_buku, 3) + 1 : 1;
+        return 'BK-' . str_pad($number, 6, '0', STR_PAD_LEFT);
+    }
 
     public function penerbit()
     {

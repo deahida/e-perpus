@@ -30,10 +30,36 @@ class PeminjamanController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        // Siswa & Guru hanya bisa lihat peminjamannya sendiri
+        // Siswa hanya bisa lihat peminjamannya sendiri
+        // Guru dan Admin bisa lihat semua data peminjaman
         $user = $request->user();
-        if ($user->role !== 'admin') {
+        if ($user->role === 'siswa') {
             $query->where('user_id', $user->id);
+        }
+
+        $peminjaman = $query->orderByDesc('created_at')->paginate($request->per_page ?? 15);
+
+        return response()->json(['success' => true, 'data' => $peminjaman]);
+    }
+
+    /**
+     * "Peminjaman Saya" — always scoped to the logged-in user.
+     */
+    public function myIndex(Request $request)
+    {
+        $user = $request->user();
+
+        $query = Peminjaman::with(['user:id,name,role,nis,nip', 'book:id,judul,isbn,cover,penulis', 'approver:id,name'])
+            ->where('user_id', $user->id);
+
+        if ($request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('kode_peminjaman', 'like', "%{$request->search}%")
+                  ->orWhereHas('book', fn($b) => $b->where('judul', 'like', "%{$request->search}%"));
+            });
+        }
+        if ($request->status) {
+            $query->where('status', $request->status);
         }
 
         $peminjaman = $query->orderByDesc('created_at')->paginate($request->per_page ?? 15);
@@ -225,13 +251,13 @@ class PeminjamanController extends Controller
         DB::beginTransaction();
         try {
             $tanggalKembali = now();
-            $denda = 0;
 
-            if ($tanggalKembali->greaterThan($peminjaman->tanggal_kembali_rencana)) {
-                $hariTerlambat = $tanggalKembali->diffInDays($peminjaman->tanggal_kembali_rencana);
-                $dendaPerHari = (float) Setting::getValue('denda_per_hari', 1000);
-                $denda = $hariTerlambat * $dendaPerHari;
-            }
+            // Temporarily set return date to calculate fine via model
+            $peminjaman->tanggal_kembali_aktual = $tanggalKembali;
+            $peminjaman->status = 'dikembalikan';
+            $denda = $peminjaman->calculateFine();
+            // Reset for proper update
+            $peminjaman->status = 'dipinjam';
 
             $peminjaman->update([
                 'tanggal_kembali_aktual' => $tanggalKembali,

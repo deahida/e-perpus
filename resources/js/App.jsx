@@ -57,6 +57,7 @@ function AppRoutes() {
                 <Route path="rak-buku" element={<ProtectedRoute roles={['admin']}><RakBuku /></ProtectedRoute>} />
                 <Route path="penerbit" element={<ProtectedRoute roles={['admin']}><Penerbit /></ProtectedRoute>} />
                 <Route path="peminjaman" element={<ProtectedRoute roles={['admin', 'guru']}><Peminjaman /></ProtectedRoute>} />
+
                 <Route path="checkpoints" element={<ProtectedRoute roles={['admin', 'guru']}><Checkpoints /></ProtectedRoute>} />
                 <Route path="users" element={<ProtectedRoute roles={['admin']}><Users /></ProtectedRoute>} />
                 <Route path="kelas" element={<ProtectedRoute roles={['admin']}><Kelas /></ProtectedRoute>} />

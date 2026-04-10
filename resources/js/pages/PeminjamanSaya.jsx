@@ -168,12 +168,17 @@ export default function PeminjamanSaya() {
                                             }
                                         </div>
                                     )}
+                                    {item.status === 'dipinjam' && daysRemaining !== null && daysRemaining < 0 && item.denda_realtime > 0 && (
+                                        <div className="ps-card-fine">
+                                            💰 Denda: <span className="ps-card-fine-amount">Rp {Number(item.denda_realtime).toLocaleString('id-ID')}</span>
+                                        </div>
+                                    )}
                                     {item.status === 'dikembalikan' && item.tanggal_kembali_aktual && (
                                         <div className="ps-card-returned">
                                             Dikembalikan: {formatDate(item.tanggal_kembali_aktual)}
-                                            {item.denda > 0 && (
+                                            {(item.denda_realtime > 0 || item.denda > 0) && (
                                                 <span className="ps-card-denda">
-                                                    Denda: Rp {Number(item.denda).toLocaleString('id-ID')}
+                                                    Denda: Rp {Number(item.denda_realtime || item.denda).toLocaleString('id-ID')}
                                                 </span>
                                             )}
                                         </div>
@@ -257,11 +262,16 @@ export default function PeminjamanSaya() {
                                     <span className="ps-detail-value">{formatDate(selectedItem.tanggal_kembali_aktual)}</span>
                                 </div>
                             )}
-                            {selectedItem.denda > 0 && (
+                            {(selectedItem.denda_realtime > 0 || selectedItem.denda > 0) && (
                                 <div className="ps-detail-row">
                                     <span className="ps-detail-label">Denda</span>
                                     <span className="ps-detail-value" style={{ color: 'var(--danger)', fontWeight: 600 }}>
-                                        Rp {Number(selectedItem.denda).toLocaleString('id-ID')}
+                                        Rp {Number(selectedItem.denda_realtime || selectedItem.denda).toLocaleString('id-ID')}
+                                        {selectedItem.status === 'dipinjam' && selectedItem.hari_terlambat > 0 && (
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 400, marginLeft: 8, opacity: 0.8 }}>
+                                                ({selectedItem.hari_terlambat} hari terlambat)
+                                            </span>
+                                        )}
                                     </span>
                                 </div>
                             )}

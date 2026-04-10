@@ -25,6 +25,8 @@ class Peminjaman extends Model
         'denda_dibayar' => 'boolean',
     ];
 
+    protected $appends = ['denda_realtime', 'hari_terlambat'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -49,6 +51,59 @@ class Peminjaman extends Model
     {
         return $this->status === 'dipinjam'
             && now()->greaterThan($this->tanggal_kembali_rencana);
+    }
+
+    /**
+     * Calculate fine in real-time based on current state.
+     */
+    public function calculateFine(): float
+    {
+        $dendaPerHari = (float) Setting::getValue('denda_per_hari', 1000);
+
+        // Already returned — use stored denda or recalculate from return date
+        if ($this->status === 'dikembalikan') {
+            if ($this->denda > 0) {
+                return (float) $this->denda;
+            }
+            if ($this->tanggal_kembali_aktual && $this->tanggal_kembali_aktual->greaterThan($this->tanggal_kembali_rencana)) {
+                return $this->tanggal_kembali_aktual->diffInDays($this->tanggal_kembali_rencana) * $dendaPerHari;
+            }
+            return 0;
+        }
+
+        // Still borrowed and overdue — calculate from today
+        if ($this->status === 'dipinjam' && now()->greaterThan($this->tanggal_kembali_rencana)) {
+            return now()->diffInDays($this->tanggal_kembali_rencana) * $dendaPerHari;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Accessor: real-time fine amount (auto-appended to JSON).
+     */
+    public function getDendaRealtimeAttribute(): float
+    {
+        return $this->calculateFine();
+    }
+
+    /**
+     * Accessor: days overdue (auto-appended to JSON).
+     */
+    public function getHariTerlambatAttribute(): int
+    {
+        if ($this->status === 'dikembalikan' && $this->tanggal_kembali_aktual) {
+            if ($this->tanggal_kembali_aktual->greaterThan($this->tanggal_kembali_rencana)) {
+                return (int) $this->tanggal_kembali_aktual->diffInDays($this->tanggal_kembali_rencana);
+            }
+            return 0;
+        }
+
+        if ($this->status === 'dipinjam' && now()->greaterThan($this->tanggal_kembali_rencana)) {
+            return (int) now()->diffInDays($this->tanggal_kembali_rencana);
+        }
+
+        return 0;
     }
 
     public static function generateKode(): string

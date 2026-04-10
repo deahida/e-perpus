@@ -10,7 +10,9 @@ import {
     HiOutlineArrowLeft,
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-import logoImg from '../../img/logo.png';
+import logoadmin from '../../img/iconadmin.png';
+import logoguru from '../../img/iconguru.png';
+import logosiswa from '../../img/iconsiswa.png';
 
 const roleConfig = {
     admin: {
@@ -108,12 +110,16 @@ export default function LoginRole({ role = 'admin' }) {
                     <span>Kembali</span>
                 </button>
 
-                {/* Logo */}
-                <div className="welcome-logo" style={{ marginTop: 8 }}>
-                    <div className="welcome-logo-inner">
-                        <img src={logoImg} alt="Logo e-Perpus" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                {/* Role Icon */}
+                <div className="role-icon-wrapper">
+                    <div className={`role-icon-container role-icon--${role}`}>
+                        <img
+                            src={role === 'admin' ? logoadmin : role === 'guru' ? logoguru : logosiswa}
+                            alt={`Icon ${role}`}
+                            className="role-icon-img"
+                            draggable={false}
+                        />
                     </div>
-                    <div className="welcome-logo-ring" />
                 </div>
 
                 <h1>{config.title}</h1>

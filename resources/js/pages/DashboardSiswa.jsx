@@ -5,7 +5,8 @@ import {
     HiOutlineBookOpen, HiOutlineChevronRight,
     HiOutlineX, HiOutlineStar, HiOutlineCalendar,
     HiOutlineClipboardList, HiOutlineCheckCircle, HiOutlineExclamation,
-    HiOutlineHeart, HiOutlineSearch,
+    HiOutlineHeart, HiOutlineSearch, HiOutlineBell, HiOutlineClock,
+    HiOutlineCash, HiOutlineArrowSmRight,
 } from 'react-icons/hi';
 
 export default function DashboardSiswa() {
@@ -77,7 +78,11 @@ export default function DashboardSiswa() {
     if (loading) return <div className="loading-spinner"><div className="spinner"></div> Memuat dashboard...</div>;
     if (!data) return <div className="empty-state"><h3>Gagal memuat data</h3></div>;
 
-    const { popular_books, my_borrowings, active_borrow_count, latest_checkpoint, top_readers, recommendations } = data;
+    const {
+        popular_books, my_borrowings, active_borrow_count, latest_checkpoint,
+        top_readers, recommendations, max_peminjaman, total_denda,
+        notifications, activity_log, denda_per_hari,
+    } = data;
 
     const today = new Date();
     const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -85,6 +90,8 @@ export default function DashboardSiswa() {
     const dateStr = `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
 
     const activeBorrows = my_borrowings?.filter(b => b.status === 'dipinjam') || [];
+    const maxPinjam = max_peminjaman || 3;
+    const progressPercent = Math.min(((active_borrow_count || 0) / maxPinjam) * 100, 100);
 
     // Filter books based on search query
     const filteredBooks = (popular_books || []).filter(book => {
@@ -103,6 +110,32 @@ export default function DashboardSiswa() {
         return `/storage/${cover}`;
     };
 
+    const formatDate = (d) => {
+        if (!d) return '-';
+        return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    const formatTime = (d) => {
+        if (!d) return '';
+        const date = new Date(d);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+        if (diff < 60) return 'Baru saja';
+        if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)} hari lalu`;
+        return formatDate(d);
+    };
+
+    // Calculate days remaining for each active borrow
+    const getDaysRemaining = (dateStr) => {
+        if (!dateStr) return null;
+        const dueDate = new Date(dateStr);
+        const now = new Date();
+        const diff = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+        return diff;
+    };
+
     return (
         <div className="siswa-dashboard fade-in">
             {/* ─── Toast Notification ─────────────────────── */}
@@ -119,11 +152,11 @@ export default function DashboardSiswa() {
             )}
 
             {/* ─── Greeting Card ─────────────────────────── */}
-            <div className="siswa-greeting">
+            <div className="siswa-greeting siswa-greeting--siswa">
                 <div className="siswa-greeting-bg" />
                 <div className="siswa-greeting-content">
-                    <span className="siswa-greeting-badge">
-                        <HiOutlineBookOpen /> Dashboard Member
+                    <span className="siswa-greeting-badge siswa-greeting-badge--siswa">
+                        <HiOutlineBookOpen /> Dashboard Siswa
                     </span>
                     <h1 className="siswa-greeting-name">Halo, {user?.name?.split(' ')[0]}!</h1>
                     <p className="siswa-greeting-date">{dateStr}</p>
@@ -140,34 +173,130 @@ export default function DashboardSiswa() {
                 </div>
             </div>
 
-            {/* ─── Active Borrowings ─────────────────────── */}
+            {/* ─── Borrow Progress ──────────────────────── */}
+            <div className="borrow-progress-card">
+                <div className="borrow-progress-header">
+                    <span className="borrow-progress-title"><HiOutlineBookOpen /> Progress Peminjaman</span>
+                    <span className="borrow-progress-count">{active_borrow_count || 0} / {maxPinjam} buku</span>
+                </div>
+                <div className="borrow-progress-bar">
+                    <div
+                        className={`borrow-progress-fill ${progressPercent >= 100 ? 'full' : progressPercent >= 60 ? 'warning' : ''}`}
+                        style={{ width: `${progressPercent}%` }}
+                    />
+                </div>
+                {progressPercent >= 100 && (
+                    <p className="borrow-progress-note">⚠️ Batas peminjaman tercapai</p>
+                )}
+            </div>
+
+            {/* ─── Denda & Notifications ──────────────────── */}
+            {((total_denda > 0) || (notifications && notifications.length > 0)) && (
+                <div className="siswa-alerts-row">
+                    {/* Denda Card */}
+                    {total_denda > 0 && (
+                        <div className="denda-card">
+                            <div className="denda-icon"><HiOutlineCash /></div>
+                            <div className="denda-content">
+                                <div className="denda-label">Total Denda Belum Dibayar</div>
+                                <div className="denda-amount">Rp {total_denda?.toLocaleString('id-ID')}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notification Cards */}
+                    {notifications && notifications.length > 0 && (
+                        <div className="notif-panel notif-panel--compact">
+                            <div className="notif-panel-header">
+                                <h3><HiOutlineBell /> Notifikasi <span className="notif-panel-count">{notifications.length}</span></h3>
+                            </div>
+                            <div className="notif-panel-list">
+                                {notifications.map((n, i) => (
+                                    <div key={i} className={`notif-item notif-item--${n.severity}`}>
+                                        <div className={`notif-icon notif-icon--${n.severity}`}>
+                                            {n.type === 'denda' ? <HiOutlineCash /> :
+                                             n.type === 'due_today' ? <HiOutlineClock /> :
+                                             <HiOutlineExclamation />}
+                                        </div>
+                                        <div className="notif-content">
+                                            <div className="notif-desc">{n.message}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ─── Active Borrowings with Countdown ──────── */}
             {activeBorrows.length > 0 && (
                 <div className="siswa-section">
                     <div className="siswa-section-header">
                         <h2><HiOutlineClipboardList /> Buku Sedang Dipinjam</h2>
                     </div>
                     <div className="siswa-borrows-list">
-                        {activeBorrows.map(borrow => (
-                            <div key={borrow.id} className="siswa-borrow-item">
-                                <div className="siswa-borrow-cover">
-                                    {borrow.book?.cover ? (
-                                        <img src={getCoverUrl(borrow.book.cover)} alt={borrow.book.judul} />
-                                    ) : (
-                                        <div className="siswa-cover-placeholder"><HiOutlineBookOpen /></div>
+                        {activeBorrows.map(borrow => {
+                            const daysLeft = getDaysRemaining(borrow.tanggal_kembali_rencana);
+                            const isOverdue = daysLeft !== null && daysLeft < 0;
+                            const isDueToday = daysLeft === 0;
+                            const isDueSoon = daysLeft !== null && daysLeft > 0 && daysLeft <= 2;
+
+                            return (
+                                <div key={borrow.id} className={`siswa-borrow-item ${isOverdue ? 'siswa-borrow-item--overdue' : ''}`}>
+                                    <div className="siswa-borrow-cover">
+                                        {borrow.book?.cover ? (
+                                            <img src={getCoverUrl(borrow.book.cover)} alt={borrow.book.judul} />
+                                        ) : (
+                                            <div className="siswa-cover-placeholder"><HiOutlineBookOpen /></div>
+                                        )}
+                                    </div>
+                                    <div className="siswa-borrow-info">
+                                        <h4>{borrow.book?.judul}</h4>
+                                        <p className="siswa-borrow-author">{borrow.book?.penulis}</p>
+                                        <div className="siswa-borrow-meta">
+                                            <span className={`badge ${isOverdue ? 'badge-danger' : isDueToday ? 'badge-warning' : 'badge-info'}`}>
+                                                {isOverdue ? `Terlambat ${Math.abs(daysLeft)} hari` :
+                                                 isDueToday ? 'Jatuh tempo hari ini' :
+                                                 `${daysLeft} hari lagi`}
+                                            </span>
+                                            <span className="siswa-borrow-date">
+                                                <HiOutlineCalendar />
+                                                Kembali: {borrow.tanggal_kembali_rencana ? new Date(borrow.tanggal_kembali_rencana).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {isOverdue && (
+                                        <div className="siswa-borrow-overdue-badge">
+                                            <HiOutlineExclamation />
+                                        </div>
+                                    )}
+                                    {isOverdue && borrow.denda_realtime > 0 && (
+                                        <div className="fine-inline-badge">
+                                            <HiOutlineCash />
+                                            <span>Denda: Rp {Number(borrow.denda_realtime).toLocaleString('id-ID')}</span>
+                                        </div>
                                     )}
                                 </div>
-                                <div className="siswa-borrow-info">
-                                    <h4>{borrow.book?.judul}</h4>
-                                    <p className="siswa-borrow-author">{borrow.book?.penulis}</p>
-                                    <div className="siswa-borrow-meta">
-                                        <span className={`badge ${borrow.status === 'dipinjam' ? 'badge-warning' : 'badge-success'}`}>
-                                            {borrow.status}
-                                        </span>
-                                        <span className="siswa-borrow-date">
-                                            <HiOutlineCalendar />
-                                            Kembali: {borrow.tanggal_kembali_rencana ? new Date(borrow.tanggal_kembali_rencana).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '-'}
-                                        </span>
-                                    </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Activity Log ───────────────────────────── */}
+            {activity_log && activity_log.length > 0 && (
+                <div className="activity-log-card">
+                    <div className="activity-log-header">
+                        <h3><HiOutlineClock /> Riwayat Aktivitas</h3>
+                    </div>
+                    <div className="activity-log-list">
+                        {activity_log.map((act, i) => (
+                            <div key={i} className="activity-log-item">
+                                <div className={`activity-log-dot ${act.status === 'dikembalikan' ? 'activity-log-dot--return' : 'activity-log-dot--borrow'}`} />
+                                <div className="activity-log-content">
+                                    <p className="activity-log-desc">{act.deskripsi}</p>
+                                    <span className="activity-log-time">{formatTime(act.waktu)}</span>
                                 </div>
                             </div>
                         ))}

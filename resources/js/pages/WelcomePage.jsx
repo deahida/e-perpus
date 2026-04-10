@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext.jsx';
 import {
-    HiOutlineShieldCheck,
-    HiOutlineAcademicCap,
-    HiOutlineUserGroup,
     HiOutlineSun,
     HiOutlineMoon,
     HiOutlineArrowRight,
 } from 'react-icons/hi';
 import logoImg from '../../img/logo.png';
+import logoadmin from '../../img/iconadmin.png';
+import logoguru from '../../img/iconguru.png';
+import logosiswa from '../../img/iconsiswa.png';
 
 export default function WelcomePage() {
     const navigate = useNavigate();
@@ -25,21 +25,21 @@ export default function WelcomePage() {
         {
             role: 'admin',
             label: 'Login Admin',
-            icon: <HiOutlineShieldCheck />,
+            icon: <img src={logoadmin} alt="Icon Admin" className="welcome-btn-icon-img" />,
             path: '/login/admin',
             className: 'welcome-btn-admin',
         },
         {
             role: 'guru',
             label: 'Login Guru',
-            icon: <HiOutlineAcademicCap />,
+            icon: <img src={logoguru} alt="Icon Guru" className="welcome-btn-icon-img" />,
             path: '/login/guru',
             className: 'welcome-btn-guru',
         },
         {
             role: 'siswa',
             label: 'Login Siswa',
-            icon: <HiOutlineUserGroup />,
+            icon: <img src={logosiswa} alt="Icon Siswa" className="welcome-btn-icon-img" />,
             path: '/login/siswa',
             className: 'welcome-btn-siswa',
         },

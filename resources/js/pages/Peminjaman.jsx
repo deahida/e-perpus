@@ -91,8 +91,19 @@ export default function Peminjaman() {
                                                 <span className={`badge ${item.status === 'dipinjam' ? 'badge-warning' : item.status === 'dikembalikan' ? 'badge-success' : 'badge-danger'}`}>
                                                     {item.status}
                                                 </span>
+                                                {item.status === 'dipinjam' && item.hari_terlambat > 0 && (
+                                                    <span className="badge badge-danger" style={{ marginLeft: 4, fontSize: '0.7rem' }}>
+                                                        Terlambat {item.hari_terlambat} hari
+                                                    </span>
+                                                )}
                                             </td>
-                                            <td>{item.denda > 0 ? `Rp ${Number(item.denda).toLocaleString('id-ID')}` : '-'}</td>
+                                            <td>
+                                                {(item.denda_realtime > 0 || item.denda > 0) ? (
+                                                    <span style={{ color: 'var(--danger)', fontWeight: 600 }}>
+                                                        Rp {Number(item.denda_realtime || item.denda).toLocaleString('id-ID')}
+                                                    </span>
+                                                ) : '-'}
+                                            </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 4 }}>
                                                     {item.status === 'dipinjam' && <button className="btn btn-sm btn-success" onClick={() => handleReturn(item.id)} title="Kembalikan"><HiOutlineRefresh /></button>}

@@ -56,6 +56,7 @@ class BookController extends Controller
 
         $data = $request->except('cover');
         $data['stok_tersedia'] = $request->stok;
+        $data['kode_buku'] = $request->kode_buku ?: Book::generateKodeBuku();
 
         if ($request->hasFile('cover')) {
             $data['cover'] = $request->file('cover')->store('covers', 'public');

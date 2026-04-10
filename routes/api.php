@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PeminjamanController;
 use App\Http\Controllers\Api\PenerbitController;
 use App\Http\Controllers\Api\RakBukuController;
 use App\Http\Controllers\Api\SettingController;
+
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/peminjaman', [PeminjamanController::class, 'store']);
         Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show']);
         Route::post('/peminjaman/{peminjaman}/return', [PeminjamanController::class, 'returnBook']);
+
+
 
         // Checkpoints
         Route::get('/checkpoints', [CheckpointController::class, 'index']);
@@ -76,7 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/books-list', [BookController::class, 'index']);
     Route::get('/books-list/{book}', [BookController::class, 'show']);
     Route::get('/categories-list', [CategoryController::class, 'index']);
-    Route::get('/my-peminjaman', [PeminjamanController::class, 'index']);
+    Route::get('/my-peminjaman', [PeminjamanController::class, 'myIndex']);
 
     // ─── Self-borrow (siswa borrows for themselves) ──────
     Route::post('/borrow', [PeminjamanController::class, 'selfBorrow']);
